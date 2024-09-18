@@ -1,0 +1,26 @@
+# Python-related
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.env
+*.venv
+*.virtualenv
+*.egg-info
+.env
+
+# Ignore CSV files
+*.csv
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+.env/
+
+# Logs
+*.log
