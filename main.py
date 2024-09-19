@@ -8,6 +8,7 @@ generate_combined_report("31-08-2024")
 
 # Generate reconciliation report
 ramp_report_path = "/Users/ahmetbesiroglu/Projects/ramp_aging_report/masterworks_administrative_services,_llc_open_bills_aging_report_as_of_31-08-2024.csv"
-netsuite_report_path = "/Users/ahmetbesiroglu/Projects/ramp_aging_report/A_PAgingSummary-195.xls"
+netsuite_report_path = "/Users/ahmetbesiroglu/Projects/ramp_aging_report/A_PAgingSummary18.xls"
 output_path = "reconciliation_report.csv"
+
 generate_reconciliation_report(ramp_report_path, netsuite_report_path, output_path)

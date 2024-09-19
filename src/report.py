@@ -215,7 +215,20 @@ def generate_combined_report(specified_date):
     print(aging_report)
 
 
-def generate_reconciliation_report(ramp_report_path, netsuite_report_path, output_path):
+import pandas as pd
+import xml.etree.ElementTree as ET
+
+import pandas as pd
+import xml.etree.ElementTree as ET
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+from openpyxl.utils.dataframe import dataframe_to_rows
+import numpy as np
+
+import pandas as pd
+import xml.etree.ElementTree as ET
+
+def generate_reconciliation_report(ramp_report_path, netsuite_report_path, output_path, epsilon=1e-6):
     # Read Ramp report
     ramp_df = pd.read_csv(ramp_report_path)
     
@@ -255,9 +268,17 @@ def generate_reconciliation_report(ramp_report_path, netsuite_report_path, outpu
     # Merge dataframes
     merged_df = pd.merge(ramp_df, netsuite_df, on='vendor', how='outer')
     
+    # Filter out vendors starting with "IC - " or exactly "Total"
+    merged_df = merged_df[~merged_df['vendor'].str.startswith('IC - ') & (merged_df['vendor'] != 'Total')]
+    
     # Calculate differences
     for period in ['current', '30', '60', '90', '>90', 'total']:
         merged_df[f'diff_{period}'] = merged_df[f'ramp_{period}'] - merged_df[f'netsuite_{period}']
+    
+    # Apply epsilon to the diff columns to remove negligible values
+    for period in ['current', '30', '60', '90', '>90', 'total']:
+        diff_col = f'diff_{period}'
+        merged_df[diff_col] = merged_df[diff_col].apply(lambda x: 0 if abs(x) < epsilon else x)
     
     # Reorder columns
     column_order = ['vendor']
@@ -270,9 +291,18 @@ def generate_reconciliation_report(ramp_report_path, netsuite_report_path, outpu
     numeric_columns = merged_df.columns.drop('vendor')
     merged_df[numeric_columns] = merged_df[numeric_columns].fillna(0)
     
-    # Sort by absolute total difference
-    merged_df['abs_total_diff'] = abs(merged_df['diff_total'])
-    merged_df = merged_df.sort_values('abs_total_diff', ascending=False).drop('abs_total_diff', axis=1)
+    # Sort by vendor name alphabetically
+    merged_df = merged_df.sort_values('vendor')
+    
+    # Calculate totals for each numeric column
+    total_row = pd.DataFrame(merged_df[numeric_columns].sum()).transpose()
+    total_row['vendor'] = 'Total'
+    
+    # Append the total row to the DataFrame
+    merged_df = pd.concat([merged_df, total_row], ignore_index=True)
+    
+    # Reorder to make sure 'Total' is the last row
+    merged_df = merged_df.reset_index(drop=True)
     
     # Save to CSV
     merged_df.to_csv(output_path, index=False)
